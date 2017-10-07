@@ -9,9 +9,11 @@ import (
 	"strings"
 )
 
+const API_VERSION = "v1"
+
 const (
-	RoutePath = "route/v1"
-	MatchPath = "match/v1"
+	RouteService = "route"
+	MatchService = "match"
 )
 
 type (
@@ -44,6 +46,14 @@ func NewClient(rootURL string) *Client {
 }
 
 func (oc *Client) buildRouteUrl(options RouteOptions) (string, error) {
+	return oc.buildUrl(RouteService, options)
+}
+
+func (oc *Client) buildMatchUrl(options RouteOptions) (string, error) {
+	return oc.buildUrl(MatchService, options)
+}
+
+func (oc *Client) buildUrl(service string, options RouteOptions) (string, error) {
 	if options.Profile == "" {
 		return "", errors.New("Profile can't be blank")
 	}
@@ -55,7 +65,7 @@ func (oc *Client) buildRouteUrl(options RouteOptions) (string, error) {
 		locations = append(locations, fmt.Sprintf("%f,%f", location.Lon, location.Lat))
 	}
 	path := strings.Join(locations, ";")
-	url := fmt.Sprintf("%s/%s/%s/%s", oc.RootURL, RoutePath, options.Profile, path)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", oc.RootURL, service, API_VERSION, options.Profile, path)
 	return url, nil
 }
 
@@ -82,7 +92,15 @@ func (oc *Client) processOptions(q *url.Values, options RouteOptions) {
 }
 
 func (oc *Client) RouteTo(options RouteOptions) ([]byte, error) {
-	url, err := oc.buildRouteUrl(options)
+	return oc.Query(MatchService, options)
+}
+
+func (oc *Client) Match(options RouteOptions) ([]byte, error) {
+	return oc.Query(MatchService, options)
+}
+
+func (oc *Client) Query(service string, options RouteOptions) ([]byte, error) {
+	url, err := oc.buildUrl(service, options)
 	if err != nil {
 		return nil, err
 	}
