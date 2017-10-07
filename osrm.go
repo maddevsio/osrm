@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -58,6 +59,28 @@ func (oc *Client) buildRouteUrl(options RouteOptions) (string, error) {
 	return url, nil
 }
 
+func (oc *Client) processOptions(q *url.Values, options RouteOptions) {
+	if options.Alternatives != "" {
+		q.Add("alternatives", options.Alternatives)
+	}
+	if options.Steps != "" {
+		q.Add("steps", options.Steps)
+	}
+
+	if options.Annotations != "" {
+		q.Add("annotations", options.Annotations)
+	}
+	if options.Geometries != "" {
+		q.Add("geometries", options.Geometries)
+	}
+	if options.Overview != "" {
+		q.Add("overview", options.Overview)
+	}
+	if options.ContinueStraight != "" {
+		q.Add("continue_straight", options.ContinueStraight)
+	}
+}
+
 func (oc *Client) RouteTo(options RouteOptions) ([]byte, error) {
 	url, err := oc.buildRouteUrl(options)
 	if err != nil {
@@ -68,12 +91,8 @@ func (oc *Client) RouteTo(options RouteOptions) ([]byte, error) {
 		return nil, err
 	}
 	q := req.URL.Query()
-	q.Add("alternatives", options.Alternatives)
-	q.Add("steps", options.Steps)
-	q.Add("annotations", options.Annotations)
-	q.Add("geometries", options.Geometries)
-	q.Add("overview", options.Overview)
-	q.Add("continue_straight", options.ContinueStraight)
+	oc.processOptions(&q, options)
+
 	req.URL.RawQuery = q.Encode()
 	resp, err := oc.Client.Do(req)
 	if err != nil {
