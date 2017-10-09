@@ -1,8 +1,9 @@
 package osrm
 
 import "testing"
+import "net/http"
 
-func TestBuildRoute(t *testing.T) {
+func TestBuildRouteUrl(t *testing.T) {
 	c := NewClient("http://example.com")
 	url, err := c.buildRouteUrl(RouteOptions{
 		Profile: "driving",
@@ -22,5 +23,21 @@ func TestBuildRoute(t *testing.T) {
 	}
 	if url != "http://example.com/route/v1/driving/74.595532,42.878473;74.587990,42.873764" {
 		t.Error(url)
+	}
+}
+
+func TestQueryIncludesOnlyRouteOptionsThatAreExplicitlySet(t *testing.T) {
+	c := NewClient("http://example.com")
+	req, err := http.NewRequest("GET", "http://example.com", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	q := req.URL.Query()
+	c.processOptions(&q, RouteOptions{
+		Steps: "true",
+	})
+	if q.Encode() != "steps=true" {
+		t.Error(q.Encode())
 	}
 }
